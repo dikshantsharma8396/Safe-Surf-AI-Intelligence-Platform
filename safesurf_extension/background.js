@@ -1,7 +1,7 @@
 /**
  * SAFE-SURF AI | BACKGROUND SENTINEL
  * Lead Architect: Dikshant Sharma
- * Version: 1.5 (Robust Redirect & Emoji Sync)
+ * Version: 1.6 (Cloud-Synchronized Deployment)
  */
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -11,32 +11,36 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         // Skip scanning the extension's own internal resources
         if (tab.url.includes(chrome.runtime.id)) return;
 
-        console.log(`[Safe-Surf AI] DNA Audit: ${tab.url}`);
+        // PRODUCTION CONFIGURATION: Pointing to the Global Intelligence Hub
+        const CLOUD_API = "https://safe-surf-ai-intelligence-platform.onrender.com/api/v1/scan";
+
+        console.log(`[Safe-Surf AI] Initiating Global DNA Audit: ${tab.url}`);
 
         chrome.storage.local.get(['researchMode'], function(pref) {
             
-            fetch('http://127.0.0.1:5000/api/v1/scan', {
+            fetch(CLOUD_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: tab.url })
             })
             .then(response => response.json())
             .then(data => {
-                // FIXED: Use .includes() to handle "PHISHING ⚠️" vs "PHISHING"
+                // FIXED: Handle "PHISHING ⚠️" vs "PHISHING" for consistent verdict matching
                 if (data.verdict && data.verdict.includes("PHISHING")) {
-                    console.warn(`[Safe-Surf AI] THREAT DETECTED: ${tab.url}`);
+                    console.warn(`[Safe-Surf AI] GLOBAL THREAT DETECTED: ${tab.url}`);
 
-                    // 1. Notification
+                    // 1. System-Level Notification
                     chrome.notifications.create({
                         type: 'basic',
                         iconUrl: 'icon.png',
                         title: '🚨 PHISHING INTERCEPTED',
-                        message: `Safe-Surf AI blocked: ${tab.url}`,
+                        message: `Safe-Surf AI blocked a high-risk URL: ${tab.url}`,
                         priority: 2
                     });
 
-                    // 2. Conditional Redirect
+                    // 2. Conditional Intervention Logic
                     if (!pref.researchMode) {
+                        // FULL LOCKDOWN: Hard-redirect to local safety warning page
                         const blockedUrl = chrome.runtime.getURL("blocked.html");
                         chrome.tabs.update(tabId, { url: blockedUrl }, () => {
                             if (chrome.runtime.lastError) {
@@ -44,19 +48,23 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                             }
                         });
                     } else {
-                        console.info("[Safe-Surf AI] Researcher Mode active. Redirect bypassed.");
+                        // ADVISORY MODE: Inject warning banner via content.js v1.6
+                        console.info("[Safe-Surf AI] Researcher Mode active. Injecting advisory banner.");
                         chrome.tabs.sendMessage(tabId, { 
                             action: "warn_user",
                             verdict: data.verdict,
                             score: data.score
-                        }).catch(() => console.log("Content script loading..."));
+                        }).catch(() => console.log("Waiting for content script to handshake..."));
                     }
                     
                 } else {
-                    console.log(`[Safe-Surf AI] SAFE. DNA Score: ${data.score}%`);
+                    console.log(`[Safe-Surf AI] VERDICT: SAFE. DNA Intelligence Score: ${data.score}%`);
                 }
             })
-            .catch(error => console.error('[Safe-Surf AI] Engine Offline.', error));
+            .catch(error => {
+                console.error('[Safe-Surf AI] Intelligence Hub Connection Failed.', error);
+                // Note: On Render Free Tier, this usually means the server is waking up
+            });
         });
     }
 });
