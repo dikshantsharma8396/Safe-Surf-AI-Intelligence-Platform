@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center animate-fade-in mt-5">
+    <div class="col-md-5">
+        <div class="glass-card p-5 shadow-lg" style="border: 1px solid rgba(0, 242, 254, 0.2);">
+            <h2 class="text-center text-info mb-4" style="font-family: 'Orbitron'; letter-spacing: 2px;">
+                <i class="fas fa-terminal me-2"></i> SYSTEM LOGIN
+            </h2>
+            
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="mb-3">
+                    <label class="form-label text-white opacity-75 small fw-bold">System ID (Username)</label>
+                    <input type="text" name="username" class="form-control bg-dark text-white border-info py-2 shadow-none" 
+                           placeholder="Enter researcher ID..." required autofocus autocomplete="off">
+                </div>
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label text-white opacity-75 small fw-bold mb-0">Password</label>
+                        <a href="{{ url_for('forgot_password') }}" class="text-info text-decoration-none small hover-glow">
+                            <i class="fas fa-key me-1"></i> Forgot?
+                        </a>
+                    </div>
+                    <input type="password" name="password" class="form-control bg-dark text-white border-info py-2 shadow-none" 
+                           placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-info w-100 fw-bold py-2 shadow-sm mb-4" style="letter-spacing: 1px;">
+                    AUTHORIZE ACCESS
+                </button>
+                
+                <div class="text-center pt-3 border-top border-secondary border-opacity-25">
+                    <p class="text-muted small mb-0">
+                        New Researcher? 
+                        <a href="{{ url_for('register') }}" class="text-info text-decoration-none fw-bold ms-1">Request Credentials</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-4 text-center">
+            <div class="d-inline-block p-3 rounded-pill" style="background: rgba(255, 193, 7, 0.05); border: 1px solid rgba(255, 193, 7, 0.2);">
+                <p class="small text-white mb-0 px-2">
+                    <i class="fas fa-user-shield text-warning me-2"></i> 
+                    MFA Lockout or Email Sync Issues? 
+                    <a href="mailto:safesurfai@gmail.com?subject=SafeSurf AI: Identity Support Request" 
+                       class="text-warning fw-bold text-decoration-none ms-1">
+                        Contact Lead Architect
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <div class="mt-3 text-center">
+            <p class="text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">
+                SECURE TERMINAL v2.5 | DIKSHANT SHARMA INTEL PLATFORM
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-glow:hover {
+        text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+        color: #fff !important;
+    }
+    .form-control:focus {
+        border-color: #00f2fe !important;
+        box-shadow: 0 0 10px rgba(0, 242, 254, 0.2) !important;
+    }
+</style>
+{% endblock %}

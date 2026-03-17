@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .terminal-input {
+        background-color: rgba(8, 10, 18, 0.7) !important;
+        border: 1px solid var(--cyber-blue) !important;
+        color: #fff !important;
+        font-family: sans-serif;
+    }
+    
+    .terminal-input:focus {
+        box-shadow: 0 0 15px rgba(0, 242, 254, 0.3) !important;
+    }
+
+    .verdict-banner {
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        color: #000; 
+        transition: all 0.3s ease;
+    }
+
+    .feature-box {
+        background: rgba(8, 12, 20, 0.8);
+        border: 1px solid rgba(0, 242, 254, 0.1);
+        border-radius: 12px;
+    }
+
+    .insight-box {
+        background: rgba(8, 12, 20, 0.8);
+        border-radius: 12px;
+        border-left: 4px solid var(--cyber-blue);
+    }
+
+    .log-input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+    }
+</style>
+
+<div class="row justify-content-center mb-4 mt-2">
+    <div class="col-lg-10">
+        <div class="text-center mb-4 animate-fade-in">
+            <h6 class="text-info text-uppercase fw-bold ls-2" style="font-size: 0.75rem;">AI Security Scanner | v2.0</h6>
+            <h2 class="fw-bold text-white">Safe-Surf AI Scanner</h2>
+            <p class="text-muted small">Lead Architect: <strong>Dikshant Sharma</strong> (AI & Cybersecurity Specialist)</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('index') }}" class="mb-5">
+            <div class="input-group input-group-lg shadow-lg">
+                <span class="input-group-text bg-dark border-info text-info px-4">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" name="url" class="form-control terminal-input py-3" 
+                       placeholder="Enter website link to check for safety..." 
+                       required autofocus autocomplete="off">
+                <button class="btn btn-info fw-bold px-5" type="submit">CHECK NOW</button>
+            </div>
+        </form>
+
+        {% if prediction_text %}
+        <div class="glass-card p-4 p-md-5 animate-fade-in">
+            
+            <div class="verdict-banner p-4 p-md-5 text-center mb-5" 
+                 style="background-color: {{ res_color }}; color: {% if res_color == '#00f2fe' %}#000{% else %}#fff{% endif %};">
+                
+                <h1 class="display-2 fw-bold mb-3" style="font-family: 'Orbitron';">
+                    {{ prediction_text }} 
+                </h1>
+                
+                <h5 class="fw-bold mb-4 opacity-75">Target: {{ url }}</h5>
+                
+                <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+                    <a href="{{ url_for('download_report', url=url, result=prediction_text) }}" 
+                       class="btn {% if res_color == '#00f2fe' %}btn-dark{% else %}btn-light text-dark{% endif %} rounded-pill px-4 py-2 fw-bold shadow"
+                       onclick="showIntegrityAlert(event, this.href)">
+                         <i class="fas fa-file-pdf me-2"></i> Download Forensic Audit
+                    </a>
+                    
+                    {% if 'SAFE' in prediction_text %}
+                    <a href="{{ url }}" target="_blank" rel="noopener noreferrer" 
+                       class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow" style="background-color: #198754; border: none; color: white;">
+                         <i class="fas fa-external-link-alt me-2"></i> Open Website
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-info fw-bold mb-4" style="font-family: 'Orbitron';">
+                    <i class="fas fa-list-check me-2"></i> SCAN FORENSICS
+                </h4>
+                
+                <div class="row g-3 mb-4">
+                    {% for key, value in analytics.items() %}
+                    <div class="col-md-4 col-sm-6">
+                        <div class="feature-box p-3 h-100">
+                            <div class="small text-info text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                {{ key }}
+                            </div>
+                            <div class="fs-5 fw-bold {% if '⚠️' in value %}text-danger{% else %}text-white{% endif %}">
+                                {{ value }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="insight-box p-3 mt-4 mb-5">
+                    <span class="text-white fw-bold">Neural Insight:</span> 
+                    <span class="text-muted small ms-1">Heuristic patterns and Random Forest inference have been cross-verified. Download the audit for the full SHA-256 integrity hash.</span>
+                </div>
+
+                <div class="pt-4 border-top border-secondary">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-white mb-0"><i class="fas fa-comment-dots me-2 text-info"></i> Intelligence Feedback</h6>
+                        <span class="badge bg-dark border border-secondary text-muted fw-normal">Researcher Log</span>
+                    </div>
+                    <form action="{{ url_for('report') }}" method="POST" class="row g-2">
+                        <input type="hidden" name="target_url" value="{{ url }}">
+                        <div class="col-md-9">
+                            <input type="text" name="comment" class="form-control log-input shadow-none" placeholder="Is the result wrong? Help us refine the model..." required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-outline-info w-100 h-100 py-2 fw-bold">SUBMIT LOG</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if request.args.get('reported') == 'true' %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="liveToast" class="toast show bg-info text-dark" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body fw-bold">
+        <i class="fas fa-check-circle me-2"></i> Intel logged! Thank you for refining Safe-Surf AI.
+      </div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+    // --- AUTOMATED TOAST DISMISSAL (Optimized for Standard UX) ---
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastEl = document.getElementById('liveToast');
+        if (toastEl) {
+            setTimeout(function() {
+                var toast = new bootstrap.Toast(toastEl);
+                toast.hide();
+            }, 2500); // Automatically hides after 2.5 seconds
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

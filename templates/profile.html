@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center animate-fade-in mb-5 mt-4">
+    <div class="col-md-6 glass-card p-5">
+        
+        <div class="text-center mb-4">
+            <img src="{{ url_for('static', filename='profile_pics/' + (user.profile_pic or 'default.png')) }}" 
+                 alt="Researcher Avatar" 
+                 class="rounded-circle mb-3 shadow" 
+                 style="width: 130px; height: 130px; object-fit: cover; border: 3px solid var(--cyber-blue);">
+            
+            <h2 class="fw-bold text-info" style="font-family: 'Orbitron';">RESEARCHER PROFILE</h2>
+            <span class="badge rounded-pill {% if user.is_admin %}bg-danger{% else %}bg-info{% endif %} px-3 py-2 text-dark fw-bold mt-2 shadow-sm">
+                {% if user.is_admin %}LEAD ARCHITECT{% else %}SECURITY RESEARCHER{% endif %}
+            </span>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="mt-4">
+            
+            <div class="mb-3">
+                <label class="form-label text-white opacity-75 small fw-bold">System ID</label>
+                <input type="text" class="form-control bg-dark text-muted border-secondary py-2" value="{{ user.username }}" disabled>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label text-white opacity-75 small fw-bold">Display Nickname</label>
+                <input type="text" name="nickname" class="form-control bg-dark text-white border-info border-opacity-50 py-2" 
+                       value="{{ user.nickname or '' }}" placeholder="Enter preferred display name...">
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label text-white opacity-75 small fw-bold">Update Security Badge (Avatar)</label>
+                <input class="form-control bg-dark text-white border-info border-opacity-50 py-2" type="file" name="profile_pic" accept="image/*">
+            </div>
+
+            <hr class="my-4 border-info border-opacity-25">
+            
+            <div class="bg-dark bg-opacity-50 p-3 rounded-3 mb-4 border border-secondary border-opacity-25">
+                <h6 class="text-info small fw-bold mb-2" style="font-family: 'Orbitron';">SECURITY STATUS</h6>
+                <p class="small text-muted mb-1"><i class="fas fa-check-circle text-success me-2"></i> MFA Protection: Active</p>
+                <p class="small text-muted mb-0"><i class="fas fa-shield-alt text-success me-2"></i> IAM Access Level: Verified</p>
+            </div>
+            
+            <button type="submit" class="btn btn-info w-100 fw-bold py-3 shadow">
+                <i class="fas fa-save me-2"></i> SAVE & RETURN TO HOME
+            </button>
+        </form>
+        
+    </div>
+</div>
+{% endblock %}

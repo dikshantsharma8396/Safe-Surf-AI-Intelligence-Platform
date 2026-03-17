@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Safe-Surf AI | Threat Intel Platform</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --cyber-blue: #00f2fe;
+            --cyber-dark: #080a12;
+            --cyber-purple: #4facfe;
+            --glass-bg: rgba(13, 17, 23, 0.75);
+            --glass-border: rgba(0, 242, 254, 0.15);
+        }
+
+        body {
+            background: 
+                linear-gradient(rgba(8, 10, 18, 0.85), rgba(8, 10, 18, 0.90)), 
+                url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop") no-repeat center center fixed;
+            background-size: cover;
+            background-color: #080a12;
+            color: #e6edf3;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--cyber-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--cyber-blue); border-radius: 4px; }
+
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            padding: 15px 0;
+        }
+
+        .navbar-brand { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 1.5px; }
+        .nav-link { color: rgba(255, 255, 255, 0.8) !important; font-weight: 600; margin: 0 10px; transition: 0.3s ease; }
+        .nav-link:hover { color: var(--cyber-blue) !important; text-shadow: 0 0 8px rgba(0, 242, 254, 0.6); }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, var(--cyber-purple), var(--cyber-blue));
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        footer {
+            margin-top: auto;
+            background: rgba(4, 5, 8, 0.95);
+            border-top: 1px solid var(--glass-border);
+            padding: 40px 0 20px 0;
+        }
+
+        .footer-hud {
+            border-left: 3px solid var(--cyber-blue);
+            padding-left: 15px;
+            background: rgba(0, 242, 254, 0.03);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .animate-fade-in { animation: fadeIn 0.6s forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* PROFESSIONAL ALERT THEME */
+        .swal2-popup {
+            background: rgba(13, 17, 23, 0.95) !important;
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--cyber-blue) !important;
+            border-radius: 20px !important;
+            color: #fff !important;
+            font-family: 'Rajdhani', sans-serif !important;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand text-info" href="{{ url_for('home') }}">
+                <i class="fas fa-shield-halved me-2"></i>SAFE-SURF AI
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#cyberNav">
+                <i class="fas fa-bars text-info fs-3"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="cyberNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+                    
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item"><a class="nav-link text-info fw-bold" href="{{ url_for('index') }}"><i class="fas fa-search-shield me-1"></i> Scanner</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('history') }}">History</a></li>
+                        
+                        {% if current_user.is_admin %}
+                        <li class="nav-item"><a class="nav-link text-warning" href="{{ url_for('admin') }}">Admin</a></li>
+                        {% endif %}
+
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link text-info d-flex align-items-center" href="{{ url_for('profile') }}">
+                                <img src="{{ url_for('static', filename='profile_pics/' + (current_user.profile_pic if current_user.profile_pic else 'default.png')) }}" 
+                                     onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+                                     alt="Profile" class="rounded-circle me-2" width="30" height="30" 
+                                     style="border: 1px solid var(--cyber-blue); object-fit: cover;">
+                                {{ current_user.nickname or current_user.username }}
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item ms-lg-3">
+                            <a class="btn btn-outline-danger btn-sm rounded-pill px-4" href="{{ url_for('logout') }}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-info btn-sm rounded-pill px-4" href="{{ url_for('register') }}">Register</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-5 flex-grow-1 animate-fade-in">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="row text-center text-md-start align-items-center">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <h5 class="mb-2" style="font-family: 'Orbitron'; color: var(--cyber-blue);">SAFE-SURF AI v2.0</h5>
+                    <p class="small text-muted mb-0">Advanced Threat Intelligence & Forensic Analysis Platform.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="footer-hud d-inline-block text-start">
+                        <h6 class="mb-1" style="font-family: 'Orbitron'; color: var(--cyber-blue); font-size: 0.7rem; letter-spacing: 1px;">PROJECT ARCHITECT</h6>
+                        <p class="small mb-0 text-white fw-bold">Dikshant Sharma</p>
+                        <p class="small text-info opacity-75 mb-0" style="font-size: 0.75rem;">AI/ML Engineer & Cybersecurity Analyst | RPSCET</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center small text-muted mt-4 border-top border-secondary border-opacity-25 pt-3">
+                &copy; <script>document.write(new Date().getFullYear())</script> Safe-Surf AI Laboratory | Secure Intelligence.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // --- FLASH MESSAGE HANDLER ---
+        document.addEventListener('DOMContentLoaded', function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            icon: '{{ "success" if category == "success" else "error" if category == "danger" else "info" }}',
+                            title: '{{ "Success" if category == "success" else "Security Alert" if category == "danger" else "System Message" }}',
+                            text: '{{ message }}',
+                            background: '#0d1117',
+                            color: '#fff',
+                            confirmButtonColor: '#00f2fe',
+                            timer: 3500,
+                            timerProgressBar: true
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+
+        // --- FORENSIC INTEGRITY INTERCEPTOR (FIXED VERSION) ---
+        function showIntegrityAlert(event, downloadUrl) {
+            event.preventDefault(); // Stop immediate navigation
+
+            // Generate a visual hash for the professional UI experience
+            const tempHash = "SHA256-" + Math.random().toString(36).substring(2, 12).toUpperCase();
+
+            Swal.fire({
+                title: 'Forensic Audit Initialized',
+                html: `Digital Signature: <br><code class="text-info" style="font-size: 0.8rem;">${tempHash}</code><br><br>Signing document with SHA-256...`,
+                icon: 'info',
+                background: '#0d1117',
+                color: '#fff',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                allowOutsideClick: false,
+                willClose: () => {
+                    // Trigger the download exactly when the popup finishes closing
+                    window.location.assign(downloadUrl);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

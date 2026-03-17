@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-11 glass-card p-5">
+        <h2 class="fw-bold mb-4" style="color: var(--cyber-blue); font-family: 'Orbitron';">
+            <i class="fas fa-chart-pie me-2"></i> SCAN ANALYTICS & HISTORY
+        </h2>
+
+        <div class="row mb-5 align-items-center bg-dark bg-opacity-25 rounded-4 p-4 border border-secondary border-opacity-10">
+            <div class="col-md-5 text-center">
+                <canvas id="liveScanChart" style="max-height: 280px;"></canvas>
+            </div>
+            <div class="col-md-7 ps-md-5">
+                <h3 class="text-info fw-bold">Statistical Summary</h3>
+                <p class="lead text-white opacity-75">Tracking structural DNA results for current research session.</p>
+                <div class="d-flex gap-4 mt-4">
+                    <div class="text-center">
+                        <h2 class="fw-bold text-success">{{ searches|selectattr('result', 'equalto', 'SAFE ✅')|list|length }}</h2>
+                        <span class="small text-uppercase opacity-50">Safe Sites</span>
+                    </div>
+                    <div class="text-center border-start ps-4">
+                        <h2 class="fw-bold text-danger">{{ searches|selectattr('result', 'equalto', 'PHISHING ⚠️')|list|length }}</h2>
+                        <span class="small text-uppercase opacity-50">Threats Found</span>
+                    </div>
+                    <div class="text-center border-start ps-4">
+                        <h2 class="fw-bold text-info">{{ searches|length }}</h2>
+                        <span class="small text-uppercase opacity-50">Total Scans</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr class="text-info border-bottom border-info border-opacity-25">
+                        <th>Target URL</th>
+                        <th>AI Verdict</th>
+                        <th>Scan Date (Local Time)</th> <th class="text-center">Forensic Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for search in searches %}
+                    <tr>
+                        <td class="small opacity-75 text-truncate" style="max-width: 300px;">{{ search.url }}</td>
+                        <td>
+                            <span class="badge rounded-pill {% if 'SAFE' in search.result %}bg-success{% else %}bg-danger{% endif %} px-3 py-2">
+                                {{ search.result }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="timestamp-local small opacity-75" data-utc="{{ search.timestamp.isoformat() if search.timestamp else '' }}">
+                                {{ search.timestamp.strftime('%Y-%m-%d %H:%M') if search.timestamp else "N/A" }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('download_report', url=search.url, result=search.result) }}" 
+                               class="btn btn-sm btn-outline-info rounded-pill px-3"
+                               onclick="showIntegrityAlert(event, this.href)"
+                               title="Download Integrity-Signed Audit">
+                                <i class="fas fa-file-pdf me-1"></i> Audit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- LOCAL CHART LOGIC ---
+    const ctx = document.getElementById('liveScanChart').getContext('2d');
+    const safeData = {{ searches|selectattr('result', 'equalto', 'SAFE ✅')|list|length }};
+    const phishData = {{ searches|selectattr('result', 'equalto', 'PHISHING ⚠️')|list|length }};
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Safe Scans', 'Phishing Threats'],
+            datasets: [{
+                data: [safeData, phishData],
+                backgroundColor: ['#00f2fe', '#ff4d4d'],
+                borderColor: 'rgba(0,0,0,0)',
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            cutout: '75%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: 'white', padding: 20, font: { weight: 'bold', family: 'Rajdhani' } } }
+            }
+        }
+    });
+
+    // --- REAL-TIME IST TIMEZONE CORRECTION ENGINE ---
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.timestamp-local').forEach(el => {
+            const utcString = el.getAttribute('data-utc');
+            if (utcString) {
+                // Parse UTC string and force 'Z' suffix if missing to ensure UTC interpretation
+                const utcDate = new Date(utcString.includes('Z') ? utcString : utcString + 'Z');
+                
+                // Format for IST (UTC+5:30) using Indian Locale
+                const options = { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true
+                };
+                
+                el.innerText = utcDate.toLocaleString('en-IN', options);
+            }
+        });
+    });
+</script>
+{% endblock %}

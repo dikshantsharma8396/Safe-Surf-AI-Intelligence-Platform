@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFE-SURF AI | ACCESS RESTRICTED</title>
+    <style>
+        :root {
+            --danger: #ff4d4d;
+            --cyber-blue: #00f2fe;
+            --bg: #0d1117;
+        }
+
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* Subtle scanline effect for a tech feel */
+        body::before {
+            content: " ";
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .container { 
+            max-width: 600px; 
+            padding: 50px; 
+            border: 2px solid var(--danger); 
+            border-radius: 20px;
+            background: rgba(255, 77, 77, 0.03);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 40px rgba(255, 77, 77, 0.15);
+            animation: pulse-border 2s infinite;
+            z-index: 20;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 20px rgba(255, 77, 77, 0.15); }
+            50% { box-shadow: 0 0 40px rgba(255, 77, 77, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(255, 77, 77, 0.15); }
+        }
+
+        h1 { 
+            color: var(--danger); 
+            font-size: 3.5rem; 
+            margin: 0; 
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        h3 {
+            color: var(--cyber-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+
+        p { 
+            color: #8b949e; 
+            line-height: 1.8; 
+            font-size: 1.1rem;
+            margin: 20px 0;
+        }
+
+        .btn {
+            display: inline-block; 
+            margin-top: 30px; 
+            padding: 15px 40px;
+            background: var(--cyber-blue); 
+            color: #0d1117; 
+            font-weight: bold;
+            text-decoration: none; 
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+        }
+
+        .btn:hover {
+            background: #ffffff;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5);
+            color: var(--bg);
+        }
+
+        .footer {
+            font-size: 11px; 
+            color: rgba(255, 255, 255, 0.2); 
+            margin-top: 40px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ACCESS BLOCKED</h1>
+        <h3>SAFE-SURF AI SENTINEL</h3>
+        <p>
+            The website you attempted to visit has been flagged by Lead Architect 
+            <strong>Dikshant Sharma's</strong> threat intelligence engine as a 
+            high-risk <strong>PHISHING</strong> entity.
+        </p>
+        <p>Your access has been restricted to safeguard your credentials and digital identity.</p>
+        
+        <a href="https://www.google.com" class="btn">GO TO SAFETY</a>
+        
+        <div class="footer">DIKSHANT SHARMA INTEL PLATFORM v2.9 | SECURE NODE ACTIVE</div>
+    </div>
+</body>
+</html>

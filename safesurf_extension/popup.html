@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            width: 320px;
+            background: #0d1117;
+            color: #00f2fe;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 15px;
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            margin: 0;
+        }
+        .header { 
+            text-align: center; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+            padding-bottom: 12px; 
+            margin-bottom: 15px; 
+        }
+        .verdict-box { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px; 
+            padding: 18px; 
+            text-align: center;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+        .score-circle { 
+            font-size: 28px; 
+            font-weight: bold; 
+            margin: 8px 0; 
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+        /* Researcher Controls Section */
+        .controls {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .report-btn {
+            width: 100%;
+            background: transparent;
+            color: #ffc107;
+            border: 1px solid #ffc107;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .report-btn:hover {
+            background: #ffc107;
+            color: #000;
+        }
+        .architect { 
+            font-size: 9px; 
+            color: #555; 
+            margin-top: 15px; 
+            text-align: center; 
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div class="header">
+        <h3 style="margin:0; letter-spacing: 1px;">SAFE-SURF AI</h3>
+        <span style="font-size: 10px; color: #888;">REAL-TIME THREAT SENTINEL</span>
+    </div>
+
+    <div class="verdict-box">
+        <div id="verdict" style="font-weight: bold; letter-spacing: 1px;">ANALYZING...</div>
+        <div class="score-circle" id="score">--%</div>
+        <div id="details" style="font-size: 11px; color: #8b949e; line-height: 1.4;">
+            Scanning DNA patterns for forensic markers...
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="toggle-row">
+            <span style="font-size: 11px; color: #aaa;">RESEARCHER MODE</span>
+            <input type="checkbox" id="researchMode" style="cursor: pointer;">
+        </div>
+        <button id="reportBtn" class="report-btn">
+            <i class="fas fa-bug"></i> REPORT THREAT TO ADMIN
+        </button>
+    </div>
+
+    <div class="architect">DEVELOPED BY DIKSHANT SHARMA</div>
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .team-card {
+        background: rgba(8, 12, 20, 0.7);
+        border: 1px solid rgba(0, 242, 254, 0.15);
+        border-radius: 15px;
+        transition: all 0.4s ease;
+        text-align: center;
+        padding: 3rem 1.5rem;
+        height: 100%;
+        position: relative;
+    }
+
+    .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 242, 254, 0.15);
+        border-color: var(--cyber-blue);
+        background: rgba(13, 20, 30, 0.9);
+    }
+
+    .lead-card {
+        background: rgba(0, 242, 254, 0.05);
+        border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+
+    .avatar-wrapper {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1.5rem;
+        border-radius: 50%;
+        background: rgba(0, 242, 254, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--cyber-blue);
+        box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+    }
+    
+    .tech-badge {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        margin: 0.25rem;
+        display: inline-block;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .ls-2 { letter-spacing: 2px; }
+
+    /* API Snippet Styling */
+    .api-docs {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px dashed rgba(0, 242, 254, 0.3);
+        border-radius: 10px;
+    }
+</style>
+
+<div class="row justify-content-center animate-fade-in mb-5 mt-3">
+    <div class="col-lg-10">
+        
+        <div class="glass-card p-4 p-md-5 mb-5 border-top border-info border-4">
+            <div class="text-center mb-5">
+                <h1 class="fw-bold text-info mb-3 ls-2" style="font-family: 'Orbitron';">
+                    <i class="fas fa-shield-halved me-2"></i> THE SAFE-SURF VISION
+                </h1>
+                <p class="lead text-white mx-auto" style="max-width: 800px;">
+                    Cybersecurity architecture must evolve from static defenses to <b>Adaptive Intelligence</b>. My research focuses on analyzing the structural DNA of URLs to preemptively neutralize phishing threats before they compromise user integrity.
+                </p>
+            </div>
+
+            <div class="text-center mt-4 pt-4 border-top border-secondary border-opacity-25">
+                <h6 class="text-white opacity-75 fw-bold mb-3 text-uppercase">Core Technology Stack</h6>
+                <div class="d-flex flex-wrap justify-content-center mb-4">
+                    <span class="tech-badge text-info"><i class="fab fa-python me-1"></i> Python 3</span>
+                    <span class="tech-badge text-white"><i class="fas fa-pepper-hot me-1"></i> Flask Framework</span>
+                    <span class="tech-badge text-info"><i class="fas fa-brain me-1"></i> Random Forest (30 Features)</span>
+                    <span class="tech-badge text-white"><i class="fas fa-database me-1"></i> SQLite Persistence</span>
+                    <span class="tech-badge text-info"><i class="fas fa-code me-1"></i> Zero-Trust IAM</span>
+                    <span class="tech-badge text-white"><i class="fab fa-bootstrap me-1"></i> Bootstrap 5</span>
+                </div>
+
+                <div class="api-docs p-4 mt-2 text-start mx-auto" style="max-width: 700px;">
+                    <h6 class="text-info fw-bold mb-2"><i class="fas fa-terminal me-2"></i> Public Intelligence API v1.0</h6>
+                    <p class="small text-muted mb-3">Developers can integrate Safe-Surf AI into external workflows via our REST endpoint:</p>
+                    <code class="text-success" style="font-size: 0.8rem;">
+                        <span class="text-warning">POST</span> /api/v1/scan<br>
+                        Content-Type: application/json<br>
+                        { "url": "target-website.com" }
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="text-center fw-bold text-info mb-2 ls-2" style="font-family: 'Orbitron';">
+            PROJECT ARCHITECT
+        </h3>
+        <p class="text-center text-white fw-bold mb-5 fs-5">RPSCET | Academic Session: 2023 - 2027</p>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-9 col-lg-8">
+                <div class="team-card lead-card">
+                    <div class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-info text-dark px-4 py-2 shadow fw-bold ls-2">
+                        LEAD ARCHITECT
+                    </div>
+
+                    <div class="avatar-wrapper mt-4">
+                        <i class="fas fa-user-gear fa-4x text-info" style="filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.5));"></i>
+                    </div>
+
+                    <h2 class="fw-bold text-info text-uppercase mb-1 ls-2">Dikshant Sharma</h2>
+                    <p class="mb-3 text-white fw-bold fs-5">B.Tech Specialization in <span style="color: var(--cyber-blue);">AI & Machine Learning</span></p>
+                    
+                    <p class="small text-muted mb-4 px-md-5">
+                        Responsible for the end-to-end development of Safe-Surf AI. Engineered the <b>Random Forest</b> predictive engine, implemented the <b>Zero-Trust MFA</b> protocol, and architected the <b>Heuristic Deep-Check Firewall</b> to mitigate evasive phishing threats.
+                    </p>
+                    
+                    <div class="mb-4">
+                        <span class="badge rounded-pill bg-dark border border-info text-info fw-bold me-2 py-2 px-3">Cybersecurity Analyst</span>
+                        <span class="badge rounded-pill bg-dark border border-white text-white fw-bold py-2 px-3">AI/ML Engineer</span>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="https://www.linkedin.com/in/sharma-dikshantofficial" target="_blank" class="btn btn-info rounded-pill px-4 fw-bold shadow">
+                            <i class="fab fa-linkedin me-2 text-dark"></i> LinkedIn Profile
+                        </a>
+                        <a href="#" class="btn btn-outline-light rounded-pill px-4 fw-bold shadow">
+                            <i class="fab fa-github me-2"></i> GitHub Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .admin-section {
+        margin-bottom: 3rem;
+        border-left: 4px solid var(--cyber-blue);
+        padding-left: 20px;
+    }
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 242, 254, 0.1);
+    }
+    .badge-admin { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid #ffc107; }
+    .badge-user { background: rgba(0, 242, 254, 0.1); color: var(--cyber-blue); border: 1px solid var(--cyber-blue); }
+    
+    .manage-input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        font-size: 0.8rem;
+        height: 32px;
+    }
+
+    .stat-card {
+        background: rgba(0, 242, 254, 0.03);
+        border: 1px solid rgba(0, 242, 254, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        transition: 0.3s;
+    }
+    .stat-card:hover { border-color: var(--cyber-blue); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); }
+
+    .swal2-popup {
+        background: rgba(13, 17, 23, 0.95) !important;
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--cyber-blue) !important;
+        border-radius: 20px !important;
+        color: #fff !important;
+        font-family: 'Rajdhani', sans-serif !important;
+    }
+
+    /* New Visualization Styling */
+    .chart-container {
+        position: relative;
+        text-align: center;
+    }
+    .chart-image {
+        max-width: 100%;
+        height: auto;
+        filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.2));
+    }
+</style>
+
+<div class="animate-fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold text-white mb-0" style="font-family: 'Orbitron';"><i class="fas fa-user-shield text-info me-2"></i> ADMIN PANEL</h2>
+            <p class="text-muted small mb-0">Platform Oversight & Threat Intelligence</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-dark border border-secondary text-info px-3 py-2">System Status: ONLINE</span>
+        </div>
+    </div>
+
+    <div class="row mb-5 g-4">
+        <div class="col-lg-7">
+            <div class="glass-card p-4 h-100">
+                <h5 class="text-info mb-4" style="font-family: 'Orbitron';"><i class="fas fa-chart-line me-2"></i> Detection Timeline</h5>
+                <canvas id="threatChart" height="150"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="glass-card p-4 h-100 text-center chart-container">
+                <h5 class="text-info mb-3" style="font-family: 'Orbitron';"><i class="fas fa-microchip me-2"></i> Intelligence Distribution</h5>
+                {% if chart_url %}
+                    <img src="data:image/png;base64,{{ chart_url }}" class="chart-image" alt="Threat Chart">
+                {% else %}
+                    <div class="py-5">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Insufficient scan data for forensic visualization.</p>
+                    </div>
+                {% endif %}
+                
+                <hr class="border-secondary opacity-25">
+                
+                <div class="row g-2 mt-2">
+                    <div class="col-4 text-center border-end border-secondary border-opacity-25">
+                        <div class="small text-muted">Total Scans</div>
+                        <div class="h5 text-white mb-0">{{ history|length }}</div>
+                    </div>
+                    <div class="col-4 text-center border-end border-secondary border-opacity-25">
+                        <div class="small text-muted">Resilience</div>
+                        <div class="h5 text-info mb-0">{{ "%.1f"|format((safe_count / (history|length or 1)) * 100) }}%</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="small text-muted">Threat Logs</div>
+                        <div class="h5 text-warning mb-0">{{ reports|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5 g-4">
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <i class="fas fa-users fa-2x text-info mb-2"></i>
+                <h3 class="text-white mb-0">{{ users|length }}</h3>
+                <div class="small text-muted uppercase">Active Researchers</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center" style="border-color: rgba(255, 77, 77, 0.2);">
+                <i class="fas fa-biohazard fa-2x text-danger mb-2"></i>
+                <h3 class="text-white mb-0">{{ phish_count }}</h3>
+                <div class="small text-muted uppercase">Neutralized Threats</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center" style="border-color: rgba(0, 242, 254, 0.2);">
+                <i class="fas fa-shield-alt fa-2x text-info mb-2"></i>
+                <h3 class="text-white mb-0">{{ safe_count }}</h3>
+                <div class="small text-muted uppercase">Verified Assets</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <h4 class="text-info mb-4" style="font-family: 'Orbitron';"><i class="fas fa-users-cog me-2"></i> Manage Users</h4>
+        <div class="glass-card p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle">
+                    <thead class="bg-dark">
+                        <tr>
+                            <th class="ps-4">Username</th>
+                            <th>Email Address</th>
+                            <th>Role</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td class="ps-4">
+                                <span class="fw-bold text-white">{{ user.username }}</span>
+                                <div class="text-muted small">UID: #{{ user.id }}</div>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('update_email') }}" method="POST" class="d-flex gap-2">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="email" name="new_email" class="form-control manage-input w-75" value="{{ user.email }}" required>
+                                    <button type="submit" class="btn btn-sm btn-outline-info px-2" title="Sync Email"><i class="fas fa-save"></i></button>
+                                </form>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill {% if user.is_admin %}badge-admin{% else %}badge-user{% endif %} px-3">
+                                    {{ "Admin" if user.is_admin else "Researcher" }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if not user.is_admin %}
+                                <button type="button" class="btn btn-sm btn-outline-danger px-3 py-1" onclick="handleDelete('{{ user.id }}', '{{ user.username }}')">
+                                    <i class="fas fa-user-minus me-1"></i> DELETE
+                                </button>
+                                {% else %}
+                                <span class="text-muted small italic">Primary Admin</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <h4 class="text-warning mb-4" style="font-family: 'Orbitron';"><i class="fas fa-brain me-2"></i> Forensic Reports</h4>
+        <div class="glass-card p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead class="bg-dark">
+                        <tr>
+                            <th class="ps-4">Timestamp</th>
+                            <th>Source URL</th>
+                            <th>Forensic Observation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if reports %}
+                            {% for report in reports %}
+                            <tr>
+                                <td class="ps-4 small text-muted">{{ report.timestamp }}</td>
+                                <td class="text-warning small fw-bold">{{ report.url }}</td>
+                                <td class="text-white">"{{ report.comment }}"</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">No forensic records in Intelligence DB.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- LIVE TREND CHART ---
+    const ctx = document.getElementById('threatChart').getContext('2d');
+    const trendValues = {{ trend_data | tojson }}; 
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: trendValues.map((_, i) => `Audit ${i+1}`),
+            datasets: [{
+                label: 'Inference (1=Safe, 0=Threat)',
+                data: trendValues, 
+                borderColor: '#00f2fe',
+                backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#00f2fe',
+                pointBorderColor: '#fff',
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    min: 0, 
+                    max: 1, 
+                    ticks: { stepSize: 1, color: '#888' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' } 
+                },
+                x: { grid: { display: false }, ticks: { color: '#888' } }
+            }
+        }
+    });
+
+    // --- PURGE SECURITY HANDLER ---
+    function handleDelete(userId, userName) {
+        Swal.fire({
+            title: 'Confirm Account Purge',
+            text: `Are you sure you want to delete researcher ${userName}? All audit history will be permanently wiped.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#00f2fe',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Purge Permanently',
+            cancelButtonText: 'Abort',
+            background: '#0d1117',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/admin/delete_user/" + userId;
+            }
+        })
+    }
+</script>
+{% endblock %}
