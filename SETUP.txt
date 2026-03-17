@@ -1,0 +1,39 @@
+==========================================================
+SAFE-SURF AI | USER INSTALLATION & SETUP GUIDE
+Lead Architect: Dikshant Sharma
+==========================================================
+
+Welcome to the Safe-Surf AI ecosystem. Follow these steps 
+to activate your real-time phishing protection.
+
+--- PART 1: BROWSER EXTENSION SETUP ---
+
+1. Open your Chromium-based browser (Chrome, Edge, or Brave).
+2. Type 'chrome://extensions/' in the address bar and hit Enter.
+3. In the top right corner, toggle 'Developer mode' to ON.
+4. Click the 'Load unpacked' button.
+5. Select the 'Safe-Surf_Extension' folder from this package.
+6. Look for the Safe-Surf icon in your toolbar and 'Pin' it for quick access.
+
+--- PART 2: BACKEND CONNECTIVITY ---
+
+- INTERNAL USERS: Ensure the Lead Architect has the local Flask 
+  server running at http://127.0.0.1:5000.
+- EXTERNAL USERS: The extension is pre-configured to point to 
+  the Safe-Surf Cloud Intelligence Core. No action required.
+
+--- PART 3: HOW TO USE ---
+
+1. SCANNING: Click the Safe-Surf icon to open the popup. 
+   Paste any URL and click 'Analyze'.
+2. PASSIVE PROTECTION: As you browse, the AI silently 
+   checks every site. If a threat (like a Punycode Spoof) 
+   is detected, a warning will be triggered.
+3. AUDIT REPORTS: After a scan, click 'Download Forensic Audit' 
+   to get a detailed PDF breakdown of the URL's DNA.
+
+----------------------------------------------------------
+SECURITY ALERT: This AI detects Punycode/Homograph attacks 
+(e.g., apple.com spoofs) that are invisible to the human eye. 
+Always check the 'Homograph Detection' status in your reports.
+----------------------------------------------------------
