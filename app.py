@@ -100,7 +100,7 @@ def send_otp_email(receiver_email, otp_code, subject_type="MFA Login"):
         # NOTE: On the free tier, Resend usually only allows sending 
         # to the email you signed up with unless you verify a domain.
         payload = {
-            "from": "SafeSurf AI <onboarding@resend.dev>",
+            "from": "<onboarding@resend.dev>",
             "to": [receiver_email],
             "subject": f"SAFE-SURF AI: {subject_type} Code",
             "html": f"""
