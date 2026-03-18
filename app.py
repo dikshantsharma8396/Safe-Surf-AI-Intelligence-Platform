@@ -46,11 +46,33 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 OTP_SENDER_EMAIL = "safesurfai@gmail.com" 
 OTP_SENDER_PASSWORD = "cwmcwojwbuepokyn" 
 
-# --- DATABASE INITIALIZATION (FIXED FOR GUNICORN/RENDER) ---
+# --- DATABASE INITIALIZATION (AUTO-COLUMN REPAIR) ---
 db.init_app(app)
 with app.app_context():
+    # 1. Create standard tables
     db.create_all()
-    print("🛡️ SAFE-SURF GENESIS: Database Tables Synchronized.")
+    
+    from sqlalchemy import text
+    try:
+        # 2. FIX: Manually inject the 'profile_pic' column if missing
+        # In Postgres, "user" is a reserved word, so we use double quotes: "user"
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS profile_pic VARCHAR(255) DEFAULT \'default.png\''))
+        
+        # 3. Create the 'reports' table (from our previous fix)
+        db.session.execute(text('''
+            CREATE TABLE IF NOT EXISTS reports (
+                id SERIAL PRIMARY KEY,
+                url TEXT NOT NULL,
+                comment TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        '''))
+        
+        db.session.commit()
+        print("🛡️ SAFE-SURF GENESIS: All PostgreSQL columns and tables are synced.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Initial Sync Note: {e}")
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
