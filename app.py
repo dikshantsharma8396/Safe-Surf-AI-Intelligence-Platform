@@ -443,8 +443,8 @@ def forgot_password(): flash("Credential recovery under maintenance.", "info"); 
 def repair_db():
     from sqlalchemy import text
     try:
-        # 1. Manually create the 'reports' table using raw SQL
-        # This gives the /admin route the exact table it is looking for
+        # CHANGE 1: Manually create the 'reports' table using raw SQL
+        # This is the exact table your /admin route is crashing on
         db.session.execute(text('''
             CREATE TABLE IF NOT EXISTS reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -454,9 +454,9 @@ def repair_db():
             )
         '''))
         db.session.commit()
-        logger.info("🛠️ SUCCESS: 'reports' table created.")
+        logger.info("🛠️ SUCCESS: 'reports' table physically created.")
 
-        # 2. Add 'is_admin' to the User table if missing
+        # CHANGE 2: Add 'is_admin' to the User table ONLY if missing
         column_check = db.session.execute(text("PRAGMA table_info(user)")).fetchall()
         column_names = [column[1] for column in column_check]
         if 'is_admin' not in column_names:
@@ -464,7 +464,7 @@ def repair_db():
             db.session.commit()
             logger.info("🛠️ SUCCESS: 'is_admin' column added.")
 
-        # 3. Promote you to Admin
+        # CHANGE 3: Promote you to Admin
         me = User.query.filter_by(email="dikshantsharma8396@gmail.com").first()
         if me:
             me.is_admin = True
