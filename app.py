@@ -46,19 +46,20 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 OTP_SENDER_EMAIL = "safesurfai@gmail.com" 
 OTP_SENDER_PASSWORD = "cwmcwojwbuepokyn" 
 
-# --- DATABASE INITIALIZATION (AUTO-COLUMN REPAIR) ---
+# --- DATABASE INITIALIZATION (COLUMN EXPANSION FIX) ---
 db.init_app(app)
 with app.app_context():
-    # 1. Create standard tables
     db.create_all()
-    
     from sqlalchemy import text
     try:
-        # 2. FIX: Manually inject the 'profile_pic' column if missing
-        # In Postgres, "user" is a reserved word, so we use double quotes: "user"
+        # 1. Expand the column size to 255 (The Fix for StringDataRightTruncation)
+        # We use ALTER COLUMN ... TYPE to resize the existing slot
+        db.session.execute(text('ALTER TABLE "user" ALTER COLUMN profile_pic TYPE VARCHAR(255)'))
+        
+        # 2. Ensure the column exists (Safety for fresh installs)
         db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS profile_pic VARCHAR(255) DEFAULT \'default.png\''))
         
-        # 3. Create the 'reports' table (from our previous fix)
+        # 3. Reports table genesis
         db.session.execute(text('''
             CREATE TABLE IF NOT EXISTS reports (
                 id SERIAL PRIMARY KEY,
@@ -69,10 +70,10 @@ with app.app_context():
         '''))
         
         db.session.commit()
-        print("🛡️ SAFE-SURF GENESIS: All PostgreSQL columns and tables are synced.")
+        print("🛡️ SAFE-SURF GENESIS: Database Schema Expanded and Synchronized.")
     except Exception as e:
         db.session.rollback()
-        print(f"⚠️ Initial Sync Note: {e}")
+        print(f"⚠️ Sync Note: {e}")
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -486,12 +487,38 @@ def report():
 def profile():
     if request.method == 'POST':
         nickname = request.form.get('nickname')
-        if nickname: current_user.nickname = nickname
-        if 'profile_pic' in request.files:
-            pic = request.files['profile_pic']
-            if pic and pic.filename != '':
-                filename = secure_filename(pic.filename); os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True); pic.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)); current_user.profile_pic = filename
-        db.session.commit(); flash("Profile Updated.", "success"); return redirect(url_for('home')) 
+        
+        try:
+            # 1. Update Nickname if provided
+            if nickname: 
+                current_user.nickname = nickname
+            
+            # 2. Handle Profile Picture Upload
+            if 'profile_pic' in request.files:
+                pic = request.files['profile_pic']
+                if pic and pic.filename != '':
+                    # Secure filename and ensure directory exists
+                    filename = secure_filename(pic.filename)
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                    
+                    # Save the physical file
+                    pic.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    
+                    # Update the User record in the database
+                    current_user.profile_pic = filename
+            
+            # 3. Finalize Database Changes
+            db.session.commit()
+            flash("Profile Updated Successfully.", "success")
+            return redirect(url_for('home'))
+
+        except Exception as e:
+            # --- CRITICAL POSTGRES FIX ---
+            db.session.rollback() # Resets the "poisoned" transaction
+            logger.error(f"❌ DATABASE ERROR during profile update: {str(e)}")
+            flash("System Error: Could not update profile. Database column might be missing.", "danger")
+            return redirect(url_for('profile'))
+
     return render_template('profile.html', user=current_user)
 
 @app.route('/admin/update_email', methods=['POST'])
