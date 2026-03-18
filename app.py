@@ -313,19 +313,19 @@ def index():
 @login_required
 @mfa_required
 def admin():
-    # 1. Keep your existing authorization check
+    # 1. Authorization Check
     if not getattr(current_user, 'is_admin', False): 
         flash("Forbidden.", "danger")
         return redirect(url_for('home'))
 
-    # 2. Keep all your original data retrieval logic (SQLAlchemy works perfectly with Postgres)
+    # 2. Data Retrieval (SQLAlchemy Models)
     users = User.query.all(); history = SearchHistory.query.all()
     phish_count = SearchHistory.query.filter(SearchHistory.result.like('%PHISHING%')).count()
     safe_count = len(history) - phish_count
     recent_scans = SearchHistory.query.order_by(SearchHistory.timestamp.desc()).limit(10).all()
     trend_data = [1 if 'SAFE' in s.result else 0 for s in reversed(recent_scans)]
 
-    # 3. Keep your exact Matplotlib chart logic
+    # 3. Chart logic
     chart_url = None
     if len(history) > 0:
         plt.figure(figsize=(5, 5))
@@ -335,29 +335,34 @@ def admin():
         img = io.BytesIO(); plt.savefig(img, format='png', bbox_inches='tight', transparent=True); img.seek(0)
         chart_url = base64.b64encode(img.getvalue()).decode(); plt.close()
 
-    # --- INTEGRATED POSTGRESQL FIX (Replaces SQLite logic) ---
+    # --- UPDATED POSTGRESQL FIX ---
     from sqlalchemy import text
     reports = []
     try:
-        # We use db.session.execute because the reports table is raw SQL, not a Model
+        # Try to get the reports
         reports = db.session.execute(text("SELECT * FROM reports ORDER BY timestamp DESC")).fetchall()
     except Exception as e:
-        # If the table is missing in Postgres, we create it
+        # CRITICAL: Reset the poisoned transaction so Postgres can talk to us again
+        db.session.rollback() 
+        
         if "does not exist" in str(e).lower() or "no such table" in str(e).lower():
-            logger.warning("🛡️ SYSTEM REPAIR: Creating missing 'reports' table in PostgreSQL.")
-            db.session.execute(text('''
-                CREATE TABLE IF NOT EXISTS reports (
-                    id SERIAL PRIMARY KEY,
-                    url TEXT NOT NULL,
-                    comment TEXT,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            '''))
-            db.session.commit()
+            logger.warning("🛡️ SYSTEM REPAIR: Transaction reset. Creating 'reports' table.")
+            try:
+                db.session.execute(text('''
+                    CREATE TABLE IF NOT EXISTS reports (
+                        id SERIAL PRIMARY KEY,
+                        url TEXT NOT NULL,
+                        comment TEXT,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                '''))
+                db.session.commit()
+            except Exception as create_error:
+                db.session.rollback()
+                logger.error(f"Table Creation Failed: {create_error}")
             reports = [] 
         else:
             logger.error(f"Postgres Error: {str(e)}")
-            # Fallback to empty list so the page doesn't 500
             reports = []
 
     return render_template('admin.html', users=users, history=history, reports=reports, 
