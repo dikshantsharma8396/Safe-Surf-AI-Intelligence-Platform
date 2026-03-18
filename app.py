@@ -356,32 +356,29 @@ def mfa_verify():
         
     user = User.query.get(mfa_user_id)
     
-    # --- GET: Generate and Send OTP ---
     if request.method == 'GET' and 'mfa_otp' not in session:
         otp = str(random.randint(100000, 999999))
         session['mfa_otp'] = otp
         send_otp_email(user.email, otp)
     
-    # --- POST: Validate User Input ---
     if request.method == 'POST':
-        user_input = request.form.get('otp')
-        
-        # Define your secret Master Code here (Change "000000" to your choice)
+        # Added .strip() to handle any accidental spaces from mobile/keyboard
+        user_input = request.form.get('otp', '').strip()
         MASTER_CODE = "881498" 
         
-        # Check if the input matches either the real OTP or the Master Code
+        # LOGGING: This will tell us exactly what the server received
+        logger.info(f"DEBUG: MFA Attempt for {user.email} | Input: '{user_input}' | Master: '{MASTER_CODE}'")
+
         if user_input == session.get('mfa_otp') or user_input == MASTER_CODE:
             login_user(user)
             session['mfa_passed'] = True
-            
-            # Clean up session security keys
             session.pop('mfa_user_id', None)
             session.pop('mfa_otp', None)
-            
-            logger.info(f"🔓 ACCESS GRANTED: {user.email} entered via {'Master Code' if user_input == MASTER_CODE else 'Email OTP'}")
+            logger.info(f"✅ SUCCESS: {user.email} logged in via MFA.")
             return redirect(url_for('index'))
         else:
-            flash("Invalid OTP. Please check your email or use the administrative bypass.", "danger")
+            logger.warning(f"❌ FAIL: {user.email} entered incorrect OTP: {user_input}")
+            flash("Invalid OTP. Use the Master Code if the email didn't arrive.", "danger")
             
     return render_template('mfa.html', email=user.email)
 
