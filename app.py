@@ -36,7 +36,7 @@ app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static', 'profile_pics')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 
 
 OTP_SENDER_EMAIL = "safesurfai@gmail.com" 
-OTP_SENDER_PASSWORD = "ipsu zrmx rwit kwlv" 
+OTP_SENDER_PASSWORD = "cwmcwojwbuepokyn" 
 
 # --- DATABASE INITIALIZATION (FIXED FOR GUNICORN/RENDER) ---
 db.init_app(app)
