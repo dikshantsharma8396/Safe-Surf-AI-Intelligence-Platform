@@ -85,31 +85,45 @@ def analyze_url(url):
     return final_code, f_list, f_analytics, expanded_url
 
 def send_otp_email(receiver_email, otp_code, subject_type="MFA Login"):
-    logger.info(f"🚀 INITIATING SSL SMTP: Targeting {receiver_email}")
-    msg = MIMEMultipart()
-    msg['From'] = f"Safe-Surf AI Gateway <{OTP_SENDER_EMAIL}>"
-    msg['To'] = receiver_email
-    msg['Subject'] = f"SAFE-SURF AI: {subject_type} Code"
-    msg.attach(MIMEText(f"Your security code is: {otp_code}", 'plain'))
+    # PASTE YOUR KEY HERE
+    RESEND_API_KEY = "re_iTfQGaCK_Afueyj88fcbgupDt7wRfvwxz" 
+
+    logger.info(f"🚀 INITIATING RESEND API: Targeting {receiver_email}")
     
     try:
-        # Switching to Port 465 (Direct SSL) to bypass network blocks
-        print("DEBUG: Connecting via SSL (Port 465)...")
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=12)
+        url = "https://api.resend.com/emails"
+        headers = {
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json"
+        }
         
-        print("DEBUG: Logging into Gmail...")
-        # Use your 16-character App Password here: "cwmcwojwbuepokyn"
-        server.login(OTP_SENDER_EMAIL, OTP_SENDER_PASSWORD)
+        # NOTE: On the free tier, Resend usually only allows sending 
+        # to the email you signed up with unless you verify a domain.
+        payload = {
+            "from": "SafeSurf AI <onboarding@resend.dev>",
+            "to": [receiver_email],
+            "subject": f"SAFE-SURF AI: {subject_type} Code",
+            "html": f"""
+                <div style="font-family: 'Courier New', monospace; border: 1px solid #00f2fe; padding: 20px;">
+                    <h2 style="color: #00f2fe;">SAFE-SURF AI INTELLIGENCE</h2>
+                    <p>Security Verification Requested.</p>
+                    <p style="font-size: 24px; font-weight: bold; color: #ff4d4d;">{otp_code}</p>
+                    <p style="font-size: 10px; color: #888;">Ref ID: {random.getrandbits(32)}</p>
+                </div>
+            """
+        }
         
-        print("DEBUG: Sending Message...")
-        server.send_message(msg)
-        server.quit()
-        logger.info("✅ SSL SMTP SUCCESS: OTP dispatched.")
-        return True
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        
+        if response.status_code in [200, 201]:
+            logger.info("✅ API SUCCESS: OTP dispatched to inbox.")
+            return True
+        else:
+            logger.error(f"❌ API FAILURE: {response.status_code} - {response.text}")
+            return False
+            
     except Exception as e:
-        logger.error(f"❌ SSL SMTP CRITICAL FAILURE: {str(e)}")
-        # Print specifically if it's still a network error
-        print(f"DEBUG: ❌ FAIL POINT: {str(e)}")
+        logger.error(f"❌ API CRITICAL ERROR: {str(e)}")
         return False
     
 @login_manager.user_loader
