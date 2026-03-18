@@ -438,5 +438,32 @@ def delete_user(user_id):
 @app.route('/forgot_password')
 def forgot_password(): flash("Credential recovery under maintenance.", "info"); return redirect(url_for('login'))
 
+@app.route('/repair_db')
+@login_required
+def repair_db():
+    from sqlalchemy import text
+    try:
+        # This is the "Magic Command" that adds the column to the live Render DB
+        db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
+        db.session.commit()
+        
+        # This promotes YOU to Admin automatically
+        me = User.query.filter_by(email="safesurfai@gmail.com").first()
+        if me:
+            me.is_admin = True
+            db.session.commit()
+            
+        return "✅ DATABASE REPAIRED: Column 'is_admin' added and you are now Admin! <a href='/admin'>Go to Admin Panel</a>"
+    except Exception as e:
+        # If it fails, the column might already exist, so we just make sure you are Admin
+        try:
+            me = User.query.filter_by(email="safesurfai@gmail.com").first()
+            if me:
+                me.is_admin = True
+                db.session.commit()
+            return f"Database status: {str(e)}. Admin rights restored. <a href='/admin'>Try Admin Page</a>"
+        except:
+            return f"❌ Repair Failed: {str(e)}"
+
 if __name__ == '__main__':
     app.run(debug=True)
