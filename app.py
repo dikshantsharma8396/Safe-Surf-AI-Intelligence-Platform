@@ -28,12 +28,20 @@ from features import extract_features
 app = Flask(__name__)
 CORS(app) 
 
-# --- CONFIGURATION ---
+# --- CONFIGURATION (UPGRADED TO PERMANENT POSTGRES) ---
 app.config['SECRET_KEY'] = 'safesurf_v2_dikshant_sharma_intel_platform'
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'safesurf.db')
+
+# Link to your Render Cloud Database
+DATABASE_URL = "postgresql://safesurf_db_user:bVIlWorCnV4yxmMvmbBF4Wz3lXKIFZBJ@dpg-d6tfci4r85hc739chdcg-a/safesurf_db"
+
+# Fix for SQLAlchemy/Render compatibility
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static', 'profile_pics')
-app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 OTP_SENDER_EMAIL = "safesurfai@gmail.com" 
 OTP_SENDER_PASSWORD = "cwmcwojwbuepokyn" 
@@ -305,19 +313,19 @@ def index():
 @login_required
 @mfa_required
 def admin():
-    # Keep your existing authorization check
+    # 1. Keep your existing authorization check
     if not getattr(current_user, 'is_admin', False): 
         flash("Forbidden.", "danger")
         return redirect(url_for('home'))
 
-    # Keep all your original data retrieval logic
+    # 2. Keep all your original data retrieval logic (SQLAlchemy works perfectly with Postgres)
     users = User.query.all(); history = SearchHistory.query.all()
     phish_count = SearchHistory.query.filter(SearchHistory.result.like('%PHISHING%')).count()
     safe_count = len(history) - phish_count
     recent_scans = SearchHistory.query.order_by(SearchHistory.timestamp.desc()).limit(10).all()
     trend_data = [1 if 'SAFE' in s.result else 0 for s in reversed(recent_scans)]
 
-    # Keep your exact Matplotlib chart logic
+    # 3. Keep your exact Matplotlib chart logic
     chart_url = None
     if len(history) > 0:
         plt.figure(figsize=(5, 5))
@@ -327,30 +335,30 @@ def admin():
         img = io.BytesIO(); plt.savefig(img, format='png', bbox_inches='tight', transparent=True); img.seek(0)
         chart_url = base64.b64encode(img.getvalue()).decode(); plt.close()
 
-    # --- INTEGRATED SELF-HEALING FIX ---
-    db_path = os.path.join(basedir, 'safesurf.db')
+    # --- INTEGRATED POSTGRESQL FIX (Replaces SQLite logic) ---
+    from sqlalchemy import text
     reports = []
     try:
-        conn = sqlite3.connect(db_path); conn.row_factory = sqlite3.Row
-        reports = conn.execute("SELECT * FROM reports ORDER BY timestamp DESC").fetchall()
-        conn.close()
-    except sqlite3.OperationalError as e:
-        # If the table is missing, we create it instead of crashing with a 500 error
-        if "no such table: reports" in str(e).lower():
-            from sqlalchemy import text
-            logger.warning("🛡️ SYSTEM REPAIR: Creating missing 'reports' table on the fly.")
+        # We use db.session.execute because the reports table is raw SQL, not a Model
+        reports = db.session.execute(text("SELECT * FROM reports ORDER BY timestamp DESC")).fetchall()
+    except Exception as e:
+        # If the table is missing in Postgres, we create it
+        if "does not exist" in str(e).lower() or "no such table" in str(e).lower():
+            logger.warning("🛡️ SYSTEM REPAIR: Creating missing 'reports' table in PostgreSQL.")
             db.session.execute(text('''
                 CREATE TABLE IF NOT EXISTS reports (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id SERIAL PRIMARY KEY,
                     url TEXT NOT NULL,
                     comment TEXT,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             '''))
             db.session.commit()
-            reports = [] # Return empty list so the page loads
+            reports = [] 
         else:
-            raise e # Reraise if it's a different database error
+            logger.error(f"Postgres Error: {str(e)}")
+            # Fallback to empty list so the page doesn't 500
+            reports = []
 
     return render_template('admin.html', users=users, history=history, reports=reports, 
                            safe_count=safe_count, phish_count=phish_count, 
@@ -425,13 +433,25 @@ def history():
 @app.route('/report', methods=['POST'])
 @login_required
 def report():
+    # Keep your original variable extraction
     target_url, comment = request.form.get('target_url'), request.form.get('comment')
-    db_path = os.path.join(basedir, 'safesurf.db')
+    
+    # UPDATED: Use SQLAlchemy (Postgres-ready) instead of raw sqlite3
+    from sqlalchemy import text
     try:
-        conn = sqlite3.connect(db_path); conn.execute("INSERT INTO reports (url, comment) VALUES (?, ?)", (target_url, comment)); conn.commit(); conn.close()
+        # PostgreSQL uses named parameters (:url) instead of (?)
+        db.session.execute(
+            text("INSERT INTO reports (url, comment) VALUES (:url, :comment)"), 
+            {"url": target_url, "comment": comment}
+        )
+        db.session.commit()
         return redirect(url_for('index', reported='true'))
     except Exception as e:
-        flash("Error logging threat data.", "danger"); return redirect(url_for('index'))
+        # Essential for cloud databases: rollback on failure to prevent hanging connections
+        db.session.rollback()
+        logger.error(f"Postgres Report Error: {str(e)}")
+        flash("Error logging threat data.", "danger")
+        return redirect(url_for('index'))
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
