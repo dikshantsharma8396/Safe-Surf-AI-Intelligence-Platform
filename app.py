@@ -305,13 +305,19 @@ def index():
 @login_required
 @mfa_required
 def admin():
-    if not current_user.is_admin: flash("Forbidden.", "danger"); return redirect(url_for('home'))
+    # Keep your existing authorization check
+    if not getattr(current_user, 'is_admin', False): 
+        flash("Forbidden.", "danger")
+        return redirect(url_for('home'))
+
+    # Keep all your original data retrieval logic
     users = User.query.all(); history = SearchHistory.query.all()
     phish_count = SearchHistory.query.filter(SearchHistory.result.like('%PHISHING%')).count()
     safe_count = len(history) - phish_count
     recent_scans = SearchHistory.query.order_by(SearchHistory.timestamp.desc()).limit(10).all()
     trend_data = [1 if 'SAFE' in s.result else 0 for s in reversed(recent_scans)]
 
+    # Keep your exact Matplotlib chart logic
     chart_url = None
     if len(history) > 0:
         plt.figure(figsize=(5, 5))
@@ -321,10 +327,34 @@ def admin():
         img = io.BytesIO(); plt.savefig(img, format='png', bbox_inches='tight', transparent=True); img.seek(0)
         chart_url = base64.b64encode(img.getvalue()).decode(); plt.close()
 
+    # --- INTEGRATED SELF-HEALING FIX ---
     db_path = os.path.join(basedir, 'safesurf.db')
-    conn = sqlite3.connect(db_path); conn.row_factory = sqlite3.Row
-    reports = conn.execute("SELECT * FROM reports ORDER BY timestamp DESC").fetchall(); conn.close()
-    return render_template('admin.html', users=users, history=history, reports=reports, safe_count=safe_count, phish_count=phish_count, trend_data=trend_data, chart_url=chart_url)
+    reports = []
+    try:
+        conn = sqlite3.connect(db_path); conn.row_factory = sqlite3.Row
+        reports = conn.execute("SELECT * FROM reports ORDER BY timestamp DESC").fetchall()
+        conn.close()
+    except sqlite3.OperationalError as e:
+        # If the table is missing, we create it instead of crashing with a 500 error
+        if "no such table: reports" in str(e).lower():
+            from sqlalchemy import text
+            logger.warning("🛡️ SYSTEM REPAIR: Creating missing 'reports' table on the fly.")
+            db.session.execute(text('''
+                CREATE TABLE IF NOT EXISTS reports (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    url TEXT NOT NULL,
+                    comment TEXT,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            '''))
+            db.session.commit()
+            reports = [] # Return empty list so the page loads
+        else:
+            raise e # Reraise if it's a different database error
+
+    return render_template('admin.html', users=users, history=history, reports=reports, 
+                           safe_count=safe_count, phish_count=phish_count, 
+                           trend_data=trend_data, chart_url=chart_url)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
