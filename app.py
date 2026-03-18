@@ -91,13 +91,20 @@ def send_otp_email(receiver_email, otp_code, subject_type="MFA Login"):
     msg['Subject'] = f"SAFE-SURF AI: {subject_type} Code"
     body = f"SECURITY ALERT: Verification Requested.\n\nYour code is: {otp_code}"
     msg.attach(MIMEText(body, 'plain'))
+    
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        # Added a 10-second timeout so the server doesn't hang forever
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10) 
         server.starttls()
-        server.login(OTP_SENDER_EMAIL, OTP_SENDER_PASSWORD)
-        server.send_message(msg); server.quit()
+        # CRITICAL: Ensure you are using a 16-character GOOGLE APP PASSWORD here
+        server.login(OTP_SENDER_EMAIL, OTP_SENDER_PASSWORD) 
+        server.send_message(msg)
+        server.quit()
+        logger.info(f"✅ OTP sent to {receiver_email}")
         return True
-    except: return False
+    except Exception as e:
+        logger.error(f"❌ SMTP Failure: {str(e)}")
+        return False
 
 @login_manager.user_loader
 def load_user(user_id):
