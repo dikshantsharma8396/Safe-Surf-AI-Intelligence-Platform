@@ -85,25 +85,31 @@ def analyze_url(url):
     return final_code, f_list, f_analytics, expanded_url
 
 def send_otp_email(receiver_email, otp_code, subject_type="MFA Login"):
+    print(f"DEBUG: Attempting to send OTP to {receiver_email}...")
     msg = MIMEMultipart()
     msg['From'] = f"Safe-Surf AI Gateway <{OTP_SENDER_EMAIL}>"
     msg['To'] = receiver_email
     msg['Subject'] = f"SAFE-SURF AI: {subject_type} Code"
-    body = f"SECURITY ALERT: Verification Requested.\n\nYour code is: {otp_code}"
-    msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(f"Your code is: {otp_code}", 'plain'))
     
     try:
-        # Added a 10-second timeout so the server doesn't hang forever
-        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10) 
+        print("DEBUG: Connecting to SMTP Server...")
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
+        
+        print("DEBUG: Starting TLS...")
         server.starttls()
-        # CRITICAL: Ensure you are using a 16-character GOOGLE APP PASSWORD here
-        server.login(OTP_SENDER_EMAIL, OTP_SENDER_PASSWORD) 
+        
+        print("DEBUG: Logging into Gmail...")
+        server.login(OTP_SENDER_EMAIL, OTP_SENDER_PASSWORD)
+        
+        print("DEBUG: Sending Message...")
         server.send_message(msg)
+        
         server.quit()
-        logger.info(f"✅ OTP sent to {receiver_email}")
+        print("DEBUG: ✅ OTP SENT SUCCESSFULLY!")
         return True
     except Exception as e:
-        logger.error(f"❌ SMTP Failure: {str(e)}")
+        print(f"DEBUG: ❌ SMTP CRASH: {str(e)}")
         return False
 
 @login_manager.user_loader
