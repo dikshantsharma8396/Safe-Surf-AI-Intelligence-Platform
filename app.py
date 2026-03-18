@@ -85,33 +85,33 @@ def analyze_url(url):
     return final_code, f_list, f_analytics, expanded_url
 
 def send_otp_email(receiver_email, otp_code, subject_type="MFA Login"):
-    print(f"DEBUG: Attempting to send OTP to {receiver_email}...")
+    logger.info(f"🚀 INITIATING SSL SMTP: Targeting {receiver_email}")
     msg = MIMEMultipart()
     msg['From'] = f"Safe-Surf AI Gateway <{OTP_SENDER_EMAIL}>"
     msg['To'] = receiver_email
     msg['Subject'] = f"SAFE-SURF AI: {subject_type} Code"
-    msg.attach(MIMEText(f"Your code is: {otp_code}", 'plain'))
+    msg.attach(MIMEText(f"Your security code is: {otp_code}", 'plain'))
     
     try:
-        print("DEBUG: Connecting to SMTP Server...")
-        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
-        
-        print("DEBUG: Starting TLS...")
-        server.starttls()
+        # Switching to Port 465 (Direct SSL) to bypass network blocks
+        print("DEBUG: Connecting via SSL (Port 465)...")
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=12)
         
         print("DEBUG: Logging into Gmail...")
+        # Use your 16-character App Password here: "cwmcwojwbuepokyn"
         server.login(OTP_SENDER_EMAIL, OTP_SENDER_PASSWORD)
         
         print("DEBUG: Sending Message...")
         server.send_message(msg)
-        
         server.quit()
-        print("DEBUG: ✅ OTP SENT SUCCESSFULLY!")
+        logger.info("✅ SSL SMTP SUCCESS: OTP dispatched.")
         return True
     except Exception as e:
-        print(f"DEBUG: ❌ SMTP CRASH: {str(e)}")
+        logger.error(f"❌ SSL SMTP CRITICAL FAILURE: {str(e)}")
+        # Print specifically if it's still a network error
+        print(f"DEBUG: ❌ FAIL POINT: {str(e)}")
         return False
-
+    
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
