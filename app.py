@@ -443,29 +443,38 @@ def forgot_password(): flash("Credential recovery under maintenance.", "info"); 
 def repair_db():
     from sqlalchemy import text
     try:
-        # 1. Inspect the current table structure
+        # Fix 1: Add is_admin column to User table if missing
         column_check = db.session.execute(text("PRAGMA table_info(user)")).fetchall()
         column_names = [column[1] for column in column_check]
-
-        # 2. Add 'is_admin' ONLY if it's missing
         if 'is_admin' not in column_names:
             db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
             db.session.commit()
-            logger.info("🛠️ DATABASE: Added missing 'is_admin' column.")
-        
-        # 3. Force Admin rights for your specific email
+            logger.info("🛠️ Added is_admin column.")
+
+        # Fix 2: Create the MISSING 'reports' table (The cause of your 500 error)
+        # This matches the query your /admin route is trying to run
+        db.session.execute(text('''
+            CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+                comment TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        '''))
+        db.session.commit()
+        logger.info("🛠️ Created reports table.")
+
+        # Fix 3: Ensure your specific account is Admin
         me = User.query.filter_by(email="dikshantsharma8396@gmail.com").first()
         if me:
             me.is_admin = True
             db.session.commit()
-            logger.info(f"🛡️ ADMIN: Rights granted to {me.email}")
 
-        return "✅ SUCCESS: Database synced and Admin rights granted! <a href='/admin'>Go to Admin Panel</a>"
-
+        return "✅ DATABASE REPAIRED: 'reports' table created and Admin rights synced! <a href='/admin'>Go to Admin Dashboard</a>"
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ SYNC ERROR: {str(e)}")
-        return f"Error: {str(e)}. Check Render logs for details."
+        logger.error(f"❌ REPAIR FAILED: {str(e)}")
+        return f"Repair Error: {str(e)}"
     
 if __name__ == '__main__':
     app.run(debug=True)
