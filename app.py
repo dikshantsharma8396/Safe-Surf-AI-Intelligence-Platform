@@ -443,27 +443,30 @@ def forgot_password(): flash("Credential recovery under maintenance.", "info"); 
 def repair_db():
     from sqlalchemy import text
     try:
-        # This is the "Magic Command" that adds the column to the live Render DB
-        db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
-        db.session.commit()
+        # 1. Check if the column ALREADY exists so we don't crash
+        # This 'PRAGMA' command asks SQLite for the list of columns
+        column_check = db.session.execute(text("PRAGMA table_info(user)")).fetchall()
+        column_names = [column[1] for column in column_check]
+
+        if 'is_admin' not in column_names:
+            # 2. Only add the column if it is truly missing
+            db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
+            db.session.commit()
+            logger.info("🛠️ DATABASE: 'is_admin' column successfully injected.")
         
-        # This promotes YOU to Admin automatically
-        me = User.query.filter_by(email="safesurfai@gmail.com").first()
+        # 3. Ensure YOU are the Admin
+        me = User.query.filter_by(email="dikshantsharma8396@gmail.com").first()
         if me:
             me.is_admin = True
             db.session.commit()
-            
-        return "✅ DATABASE REPAIRED: Column 'is_admin' added and you are now Admin! <a href='/admin'>Go to Admin Panel</a>"
-    except Exception as e:
-        # If it fails, the column might already exist, so we just make sure you are Admin
-        try:
-            me = User.query.filter_by(email="safesurfai@gmail.com").first()
-            if me:
-                me.is_admin = True
-                db.session.commit()
-            return f"Database status: {str(e)}. Admin rights restored. <a href='/admin'>Try Admin Page</a>"
-        except:
-            return f"❌ Repair Failed: {str(e)}"
+            logger.info(f"🛡️ ADMIN RIGHTS: Promoted {me.email}")
 
+        return "✅ SYNC COMPLETE: Database is updated and your data is safe! <a href='/admin'>Go to Admin Dashboard</a>"
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ SYNC FAILED: {str(e)}")
+        return f"Sync Error: {str(e)}. Please check Render Logs."
+    
 if __name__ == '__main__':
     app.run(debug=True)
