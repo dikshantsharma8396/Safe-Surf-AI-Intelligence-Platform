@@ -443,16 +443,8 @@ def forgot_password(): flash("Credential recovery under maintenance.", "info"); 
 def repair_db():
     from sqlalchemy import text
     try:
-        # Fix 1: Add is_admin column to User table if missing
-        column_check = db.session.execute(text("PRAGMA table_info(user)")).fetchall()
-        column_names = [column[1] for column in column_check]
-        if 'is_admin' not in column_names:
-            db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
-            db.session.commit()
-            logger.info("🛠️ Added is_admin column.")
-
-        # Fix 2: Create the MISSING 'reports' table (The cause of your 500 error)
-        # This matches the query your /admin route is trying to run
+        # 1. Manually create the 'reports' table using raw SQL
+        # This gives the /admin route the exact table it is looking for
         db.session.execute(text('''
             CREATE TABLE IF NOT EXISTS reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -462,19 +454,28 @@ def repair_db():
             )
         '''))
         db.session.commit()
-        logger.info("🛠️ Created reports table.")
+        logger.info("🛠️ SUCCESS: 'reports' table created.")
 
-        # Fix 3: Ensure your specific account is Admin
+        # 2. Add 'is_admin' to the User table if missing
+        column_check = db.session.execute(text("PRAGMA table_info(user)")).fetchall()
+        column_names = [column[1] for column in column_check]
+        if 'is_admin' not in column_names:
+            db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
+            db.session.commit()
+            logger.info("🛠️ SUCCESS: 'is_admin' column added.")
+
+        # 3. Promote you to Admin
         me = User.query.filter_by(email="dikshantsharma8396@gmail.com").first()
         if me:
             me.is_admin = True
             db.session.commit()
+            logger.info(f"🛡️ SUCCESS: {me.email} promoted.")
 
-        return "✅ DATABASE REPAIRED: 'reports' table created and Admin rights synced! <a href='/admin'>Go to Admin Dashboard</a>"
+        return "✅ REPAIR COMPLETE: All tables and columns are now synced! <a href='/admin'>Go to Admin Dashboard</a>"
     except Exception as e:
         db.session.rollback()
         logger.error(f"❌ REPAIR FAILED: {str(e)}")
-        return f"Repair Error: {str(e)}"
+        return f"Error: {str(e)}"
     
 if __name__ == '__main__':
     app.run(debug=True)
