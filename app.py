@@ -443,30 +443,29 @@ def forgot_password(): flash("Credential recovery under maintenance.", "info"); 
 def repair_db():
     from sqlalchemy import text
     try:
-        # 1. Check if the column ALREADY exists so we don't crash
-        # This 'PRAGMA' command asks SQLite for the list of columns
+        # 1. Inspect the current table structure
         column_check = db.session.execute(text("PRAGMA table_info(user)")).fetchall()
         column_names = [column[1] for column in column_check]
 
+        # 2. Add 'is_admin' ONLY if it's missing
         if 'is_admin' not in column_names:
-            # 2. Only add the column if it is truly missing
             db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT FALSE'))
             db.session.commit()
-            logger.info("🛠️ DATABASE: 'is_admin' column successfully injected.")
+            logger.info("🛠️ DATABASE: Added missing 'is_admin' column.")
         
-        # 3. Ensure YOU are the Admin
+        # 3. Force Admin rights for your specific email
         me = User.query.filter_by(email="dikshantsharma8396@gmail.com").first()
         if me:
             me.is_admin = True
             db.session.commit()
-            logger.info(f"🛡️ ADMIN RIGHTS: Promoted {me.email}")
+            logger.info(f"🛡️ ADMIN: Rights granted to {me.email}")
 
-        return "✅ SYNC COMPLETE: Database is updated and your data is safe! <a href='/admin'>Go to Admin Dashboard</a>"
+        return "✅ SUCCESS: Database synced and Admin rights granted! <a href='/admin'>Go to Admin Panel</a>"
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ SYNC FAILED: {str(e)}")
-        return f"Sync Error: {str(e)}. Please check Render Logs."
+        logger.error(f"❌ SYNC ERROR: {str(e)}")
+        return f"Error: {str(e)}. Check Render logs for details."
     
 if __name__ == '__main__':
     app.run(debug=True)
